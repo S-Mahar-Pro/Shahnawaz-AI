@@ -1,0 +1,84 @@
+<div class="admin-header">
+    <h2><i class="fas fa-users-cog"></i> User Management</h2>
+    <p>Manage all platform users</p>
+</div>
+
+<div class="card admin-card" style="overflow-x: auto;">
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Plan</th>
+                <th>Role</th>
+                <th>Messages</th>
+                <th>Files</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% users.forEach(u => { %>
+            <tr>
+                <td>
+                    <div style="font-weight: 500;"><%= u.username %></div>
+                    <div style="font-size: 12px; color: var(--gray);"><%= u.email %></div>
+                </td>
+                <td>
+                    <select onchange="updatePlan('<%= u._id %>', this.value)" style="padding: 4px 8px; border-radius: 6px; border: 1px solid var(--admin-accent); font-size: 12px; color: var(--admin-primary);">
+                        <option value="free" <%= u.plan === 'free' ? 'selected' : '' %>>Free</option>
+                        <option value="gold" <%= u.plan === 'gold' ? 'selected' : '' %>>Gold</option>
+                        <option value="diamond" <%= u.plan === 'diamond' ? 'selected' : '' %>>Diamond</option>
+                    </select>
+                </td>
+                <td><span class="badge badge-<%= u.role === 'admin' ? 'admin' : 'free' %>"><%= u.role %></span></td>
+                <td><%= u.messagesUsed %></td>
+                <td><%= u.filesUploaded %></td>
+                <td>
+                    <span class="status-dot <%= u.isActive ? 'status-active' : 'status-inactive' %>"></span>
+                    <%= u.isActive ? 'Active' : 'Suspended' %>
+                </td>
+                <td>
+                    <button onclick="toggleUser('<%= u._id %>')" class="btn admin-btn" style="padding: 6px 12px; font-size: 12px;">
+                        <i class="fas fa-power-off"></i> Toggle
+                    </button>
+                </td>
+            </tr>
+            <% }) %>
+        </tbody>
+    </table>
+</div>
+
+<script>
+async function updatePlan(userId, plan) {
+    try {
+        const res = await fetch(`/admin/users/${userId}/plan`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ plan })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert('Plan updated successfully!');
+        } else {
+            alert('Error: ' + (data.error || 'Update failed'));
+        }
+    } catch (error) {
+        alert('Network error: ' + error.message);
+    }
+}
+
+async function toggleUser(userId) {
+    try {
+        const res = await fetch(`/admin/users/${userId}/toggle`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+            alert(data.isActive ? 'User activated!' : 'User suspended!');
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Toggle failed'));
+        }
+    } catch (error) {
+        alert('Network error: ' + error.message);
+    }
+}
+</script>

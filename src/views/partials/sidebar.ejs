@@ -1,0 +1,40 @@
+<div class="sidebar <%= user && user.role === 'admin' ? 'sidebar-admin' : '' %>">
+    <div class="logo">
+        <i class="fas fa-atom"></i>
+        S <span>FUTURE</span> AI
+    </div>
+    
+    <nav>
+        <a href="/dashboard" class="nav-link <%= path === '/dashboard' ? 'active' : '' %>">
+            <i class="fas fa-th-large"></i> Dashboard
+        </a>
+        <a href="/chat" class="nav-link <%= path === '/chat' ? 'active' : '' %>">
+            <i class="fas fa-comments"></i> AI Chat
+        </a>
+        <a href="/tools" class="nav-link <%= path === '/tools' ? 'active' : '' %>">
+            <i class="fas fa-tools"></i> AI Tools
+        </a>
+        <% if (user.plan === 'diamond' || user.role === 'admin') { %>
+        <a href="/vault" class="nav-link <%= path === '/vault' ? 'active' : '' %>">
+            <i class="fas fa-shield-alt"></i> Diamond Vault
+        </a>
+        <% } %>
+        <a href="/upgrade" class="nav-link <%= path === '/upgrade' ? 'active' : '' %>">
+            <i class="fas fa-crown"></i> Upgrade
+        </a>
+        <% if (user.role === 'admin') { %>
+        <a href="/admin" class="nav-link <%= path.startsWith('/admin') ? 'active' : '' %>">
+            <i class="fas fa-user-shield"></i> Admin Panel
+        </a>
+        <% } %>
+    </nav>
+    
+    <div class="user-card">
+        <div style="font-weight: 600; font-size: 14px;"><%= user.username %></div>
+        <div class="plan badge badge-<%= user.plan %> <%= user.role === 'admin' ? 'badge-admin' : '' %>"><%= user.plan %> Plan</div>
+        <div style="margin-top: 12px; font-size: 12px;">
+            <a href="/profile" style="color: <%= user.role === 'admin' ? '#d8b4fe' : 'var(--gray)' %>; text-decoration: none; margin-right: 12px;">Profile</a>
+            <a href="/logout" style="color: <%= user.role === 'admin' ? '#f87171' : 'var(--danger)' %>; text-decoration: none;">Logout</a>
+        </div>
+    </div>
+</div>

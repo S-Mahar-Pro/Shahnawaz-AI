@@ -1,0 +1,36 @@
+const multer = require('multer');
+const path = require('path');
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        try {
+            cb(null, 'uploads/');
+        } catch (error) {
+            cb(new Error('Upload destination error'));
+        }
+    },
+    filename: (req, file, cb) => {
+        try {
+            const unique = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            cb(null, unique + path.extname(file.originalname));
+        } catch (error) {
+            cb(new Error('File naming error'));
+        }
+    }
+});
+
+const fileFilter = (req, file, cb) => {
+    try {
+        const allowed = ['.pdf', '.xlsx', '.xls', '.doc', '.docx', '.png', '.jpg', '.jpeg', '.mp4', '.mp3', '.txt'];
+        const ext = path.extname(file.originalname).toLowerCase();
+        if (allowed.includes(ext)) {
+            cb(null, true);
+        } else {
+            cb(new Error('File type not allowed. Supported: PDF, Excel, Word, Images, Video, Audio, TXT'));
+        }
+    } catch (error) {
+        cb(new Error('File validation error'));
+    }
+};
+
+module.exports = multer({ storage, fileFilter, limits: { fileSize: 50 * 1024 * 1024 } });

@@ -1,0 +1,29 @@
+<h2>Dashboard</h2>
+<div class="grid grid-3" style="margin-bottom: 30px;">
+    <div class="card stat-card">
+        <div class="stat-value"><%= recentChats.length %></div>
+        <div class="stat-label">Total Chats</div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-value"><%= user.plan.toUpperCase() %></div>
+        <div class="stat-label">Current Plan</div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-value"><%= user.credits || 0 %></div>
+        <div class="stat-label">Credits</div>
+    </div>
+</div>
+<div class="card">
+    <h3>Recent Chats</h3>
+    <% if (recentChats.length > 0) { %>
+        <ul style="list-style: none;">
+            <% recentChats.forEach(chat => { %>
+                <li style="padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
+                    <%= chat.title || 'Untitled Chat' %>
+                </li>
+            <% }) %>
+        </ul>
+    <% } else { %>
+        <p>No chats yet. <a href="/chat">Start a new chat</a></p>
+    <% } %>
+</div>

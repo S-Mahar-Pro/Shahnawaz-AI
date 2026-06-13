@@ -9,28 +9,52 @@ const path = require('path');
 
 const app = express();
 
-// Validate env
+// Validate Env Variables
 if (!process.env.MONGODB_URI) {
-    console.error('❌ FATAL: MONGODB_URI missing');
+    console.error('❌ FATAL: MONGODB_URI is missing');
+    process.exit(1);
+}
+if (!process.env.GEMINI_API_KEY) {
+    console.error('❌ FATAL: GEMINI_API_KEY is missing');
+    process.exit(1);
+}
+if (!process.env.SESSION_SECRET) {
+    console.error('❌ FATAL: SESSION_SECRET is missing');
     process.exit(1);
 }
 
-// Security + Middleware (same as before)
-app.use(helmet({ contentSecurityPolicy: { directives: { /* ... same as before */ } } }));
-const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 });
+// Security & Middleware
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com"],
+            imgSrc: ["'self'", "data:", "blob:"],
+            connectSrc: ["'self'", "https://generativelanguage.googleapis.com"]
+        }
+    }
+}));
+
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+});
 app.use('/api/', limiter);
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'src', 'views'));
 
-// ==================== DB CONNECTION ====================
+// ==================== DATABASE ====================
 const connectDB = async () => {
     try {
-        console.log("🔍 Trying to connect...");
         await mongoose.connect(process.env.MONGODB_URI, {
             serverSelectionTimeoutMS: 15000,
             socketTimeoutMS: 60000,
@@ -38,10 +62,9 @@ const connectDB = async () => {
             retryWrites: true,
             w: "majority"
         });
-        console.log('✅ MongoDB Atlas Connected Successfully');
+        console.log('✅ MongoDB Atlas Connected');
     } catch (err) {
         console.error('❌ MongoDB Connection Error:', err.message);
-        console.error('Full Error:', err);
         process.exit(1);
     }
 };
@@ -52,11 +75,16 @@ mongoose.connection.on('error', (err) => {
     console.error('❌ MongoDB Runtime Error:', err.message);
 });
 
-// ==================== SESSION (Temporary without MongoStore) ====================
+// ==================== SESSION ====================
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
+    store: MongoStore.create({
+        mongoUrl: process.env.MONGODB_URI,
+        ttl: 14 * 24 * 60 * 60,
+        mongoOptions: { authSource: "admin" }
+    }),
     cookie: {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
@@ -64,13 +92,14 @@ app.use(session({
     }
 }));
 
-// Routes + other code same rakh do
+// User in views
 app.use((req, res, next) => {
     res.locals.user = req.session.user || null;
     res.locals.path = req.path;
     next();
 });
 
+// ==================== ROUTES ====================
 app.use('/', require('./src/routes/auth'));
 app.use('/', require('./src/routes/main'));
 app.use('/api/chat', require('./src/routes/chat'));
@@ -78,22 +107,29 @@ app.use('/api/tools', require('./src/routes/tools'));
 app.use('/api/files', require('./src/routes/files'));
 app.use('/admin', require('./src/routes/admin'));
 
-app.get('/health', (req, res) => res.json({ status: 'OK' }));
-// Railway Health Check (Bahut Important)
+// ==================== HEALTH CHECK (Railway ke liye zaroori) ====================
 app.get('/health', (req, res) => {
-    res.status(200).json({
-        status: 'OK',
-        mongo: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
-        timestamp: new Date().toISOString()
+    res.status(200).json({ 
+        status: 'OK', 
+        mongo: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected' 
     });
-app.use((req, res) => res.status(404).send('Page Not Found'));
+});
 
-const PORT = process.env.PORT || 3000;
+// 404 Handler
+app.use((req, res) => {
+    res.status(404).render('404', { title: 'Page Not Found' });
+});
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+    console.error('❌ Global Error:', err.stack);
+    res.status(500).send('Internal Server Error');
+});
+
 // ==================== START SERVER ====================
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 S FUTURE AI running on port ${PORT}`);
     console.log(`📍 Environment: ${process.env.NODE_ENV || 'production'}`);
-    console.log(`🔗 Health: http://localhost:${PORT}/health`);
 });

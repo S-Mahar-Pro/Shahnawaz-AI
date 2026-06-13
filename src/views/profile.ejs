@@ -1,0 +1,9 @@
+<h2>Profile</h2>
+<div class="card" style="max-width: 500px;">
+    <div style="margin-bottom: 20px;">
+        <p><strong>Username:</strong> <%= user.username %></p>
+        <p><strong>Email:</strong> <%= user.email %></p>
+        <p><strong>Plan:</strong> <span class="badge badge-<%= user.plan %>"><%= user.plan %></span></p>
+    </div>
+    <a href="/logout" class="btn btn-primary">Logout</a>
+</div>

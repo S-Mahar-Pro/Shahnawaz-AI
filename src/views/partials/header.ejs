@@ -1,0 +1,10 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+    <h1><%= title %></h1>
+    <% if (user) { %>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <span><%= user.username %></span>
+            <a href="/profile" class="btn btn-secondary">Profile</a>
+            <a href="/logout" class="btn btn-secondary">Logout</a>
+        </div>
+    <% } %>
+</div>

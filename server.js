@@ -79,11 +79,21 @@ app.use('/api/files', require('./src/routes/files'));
 app.use('/admin', require('./src/routes/admin'));
 
 app.get('/health', (req, res) => res.json({ status: 'OK' }));
-
+// Railway Health Check (Bahut Important)
+app.get('/health', (req, res) => {
+    res.status(200).json({
+        status: 'OK',
+        mongo: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
+        timestamp: new Date().toISOString()
+    });
 app.use((req, res) => res.status(404).send('Page Not Found'));
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+// ==================== START SERVER ====================
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 S FUTURE AI running on port ${PORT}`);
-    console.log(`📍 Environment: production`);
+    console.log(`📍 Environment: ${process.env.NODE_ENV || 'production'}`);
+    console.log(`🔗 Health: http://localhost:${PORT}/health`);
 });

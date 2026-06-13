@@ -1,5 +1,4 @@
 require('dotenv').config();
-
 const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
@@ -7,6 +6,7 @@ const MongoStore = require('connect-mongo');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+
 const app = express();
 
 // Validate critical env vars
@@ -57,27 +57,50 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'src', 'views'));
 
-// Database Connection with error handling
-try {
-    mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ MongoDB Atlas Connected');
-} catch (err) {
-    console.error('❌ MongoDB Connection Error:', err.message);
-    process.exit(1);
-}
+// ==================== DATABASE CONNECTION ====================
+const connectDB = async () => {
+    try {
+        await mongoose.connect(process.env.MONGODB_URI, {
+            serverSelectionTimeoutMS: 10000,
+            socketTimeoutMS: 45000,
+            authSource: "admin",
+            retryWrites: true,
+            w: "majority"
+        });
+        
+        console.log('✅ MongoDB Atlas Connected');
+    } catch (err) {
+        console.error('❌ MongoDB Connection Error:', err);
+        process.exit(1);
+    }
+};
 
+// Connect to Database
+connectDB();
+
+// Listen for runtime errors
 mongoose.connection.on('error', (err) => {
-    console.error('❌ MongoDB Runtime Error:', err.message);
+    console.error('❌ MongoDB Runtime Error:', err);
 });
 
-// Session Configuration
+mongoose.connection.on('disconnected', () => {
+    console.log('⚠️ MongoDB disconnected. Trying to reconnect...');
+    connectDB();
+});
+
+// ==================== SESSION CONFIG ====================
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
         mongoUrl: process.env.MONGODB_URI,
-        ttl: 14 * 24 * 60 * 60
+        ttl: 14 * 24 * 60 * 60,
+        mongoOptions: {
+            serverSelectionTimeoutMS: 10000,
+            socketTimeoutMS: 45000,
+            authSource: "admin"
+        }
     }),
     cookie: {
         secure: process.env.NODE_ENV === 'production',
@@ -103,33 +126,21 @@ app.use('/admin', require('./src/routes/admin'));
 
 // Health Check
 app.get('/health', (req, res) => {
-    try {
-        res.json({ status: 'OK', platform: 'S FUTURE AI', timestamp: new Date().toISOString() });
-    } catch (error) {
-        res.status(500).json({ error: 'Health check failed' });
-    }
+    res.json({ status: 'OK', platform: 'S FUTURE AI', timestamp: new Date().toISOString() });
 });
 
 // 404 Handler
 app.use((req, res) => {
-    try {
-        res.status(404).render('404', { title: 'Page Not Found' });
-    } catch (error) {
-        res.status(404).send('Page Not Found');
-    }
+    res.status(404).render('404', { title: 'Page Not Found' });
 });
 
 // Global Error Handler
 app.use((err, req, res, next) => {
     console.error('❌ Global Error:', err.stack);
-    try {
-        if (req.xhr || req.headers.accept?.includes('json')) {
-            return res.status(500).json({ error: 'Internal server error. Please try again.' });
-        }
-        res.status(500).render('error', { title: 'Error', message: 'Something went wrong! Please try again.' });
-    } catch (renderError) {
-        res.status(500).send('Internal Server Error');
+    if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.status(500).json({ error: 'Internal server error. Please try again.' });
     }
+    res.status(500).render('error', { title: 'Error', message: 'Something went wrong! Please try again.' });
 });
 
 const PORT = process.env.PORT || 3000;

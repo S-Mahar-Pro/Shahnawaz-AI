@@ -88,28 +88,28 @@ router.post('/login', isNotAuthenticated, async (req, res) => {
         await user.save();
 
         req.session.user = {
-            id: user._id,
-            username: user.username,
-            email: user.email,
-            plan: user.plan,
-            role: user.role
-                
-        req.session.save((err) => {
+    id: user._id,
+    username: user.username,
+    email: user.email,
+    plan: user.plan,
+    role: user.role
+};
+
+req.session.save((err) => {
     if (err) {
         console.error('Session save error:', err);
-        return; 
+        return res.render('login', {
+            title: 'Login',
+            error: 'Login failed. Please try again.'
+        });
     }
-    
+
     if (user.role === 'admin') {
-        res.redirect('/admin'); 
+        return res.redirect('/admin');
     } else {
-        res.redirect('/dashboard');
+        return res.redirect('/dashboard');
     }
-}); 
-    
-        const redirect = req.session.returnTo || '/dashboard';
-        delete req.session.returnTo;
-        res.redirect(redirect);
+});
     } catch (error) {
         console.error('Login error:', error.message);
         res.render('login', { title: 'Login', error: 'Login failed. Please try again.' });

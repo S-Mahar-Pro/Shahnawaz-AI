@@ -93,9 +93,20 @@ router.post('/login', isNotAuthenticated, async (req, res) => {
             email: user.email,
             plan: user.plan,
             role: user.role
-        };
+                
+        req.session.save((err) => {
+    if (err) {
+        console.error('Session save error:', err);
+        return; 
+    }
     
-        });    
+    if (user.role === 'admin') {
+        res.redirect('/admin'); 
+    } else {
+        res.redirect('/dashboard');
+    }
+}); 
+    
         const redirect = req.session.returnTo || '/dashboard';
         delete req.session.returnTo;
         res.redirect(redirect);

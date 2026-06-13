@@ -1,0 +1,12 @@
+<div class="landing-hero">
+    <div class="container">
+        <h1>S FUTURE AI</h1>
+        <p>Enterprise-grade AI platform for your business</p>
+        <% if (!user) { %>
+            <a href="/login" class="btn btn-primary" style="margin-right: 10px;">Login</a>
+            <a href="/register" class="btn btn-secondary">Sign Up</a>
+        <% } else { %>
+            <a href="/dashboard" class="btn btn-primary">Go to Dashboard</a>
+        <% } %>
+    </div>
+</div>

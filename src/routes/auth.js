@@ -63,13 +63,13 @@ router.get('/login', isNotAuthenticated, (req, res) => {
 // Login POST
 router.post('/login', isNotAuthenticated, async (req, res) => {
     try {
-        const { username, password } = req.body;
+        const { email, password } = req.body;
         
-        if (!username || !password) {
-            return res.render('login', { title: 'Login', error: 'Please enter username and password' });
+        if (!email || !password) {
+            return res.render('login', { title: 'Login', error: 'Please enter email and password' });
         }
 
-        const user = await User.findOne({ username });
+        const user = await User.findOne({ email });
 
         if (!user) {
             return res.render('login', { title: 'Login', error: 'Invalid username or password' });

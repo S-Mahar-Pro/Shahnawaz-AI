@@ -5,3 +5,46 @@
         <button class="btn btn-primary">Send</button>
     </div>
 </div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const input = document.getElementById("chatInput");
+    const button = document.querySelector(".chat-input-area button");
+    const messages = document.getElementById("messages");
+
+    async function sendMessage() {
+        const message = input.value.trim();
+        if (!message) return;
+
+        // Show user message
+        messages.innerHTML += `<div><b>You:</b> ${message}</div>`;
+        input.value = "";
+
+        try {
+            const res = await fetch("/api/chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ message })
+            });
+
+            const data = await res.json();
+
+            if (data.reply) {
+                messages.innerHTML += `<div><b>AI:</b> ${data.reply}</div>`;
+            } else {
+                messages.innerHTML += `<div><b>Error:</b> No response</div>`;
+            }
+
+        } catch (err) {
+            messages.innerHTML += `<div><b>Error:</b> Server error</div>`;
+        }
+    }
+
+    button.addEventListener("click", sendMessage);
+
+    input.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") sendMessage();
+    });
+});
+</script>

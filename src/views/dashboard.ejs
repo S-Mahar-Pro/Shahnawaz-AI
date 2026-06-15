@@ -27,3 +27,23 @@
         <p>No chats yet. <a href="/chat">Start a new chat</a></p>
     <% } %>
 </div>
+<div style="margin-top: 30px; padding: 20px; background: #f8fafc; border-radius: 10px;">
+    <h3>⚡ Quick Access</h3>
+
+    <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;">
+
+        <a href="/chat" style="text-decoration:none;">💬 Chat AI</a>
+
+        <a href="/tools" style="text-decoration:none;">🧠 AI Tools</a>
+
+        <a href="/vault" style="text-decoration:none;">🔒 Vault</a>
+
+        <!-- 👑 ONLY ADMIN BUTTON -->
+        <% if (user.role === 'admin') { %>
+            <a href="/admin" style="text-decoration:none; color:red;">
+                👑 Admin Panel
+            </a>
+        <% } %>
+
+    </div>
+</div>
